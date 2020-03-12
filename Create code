@@ -1,0 +1,194 @@
+#include <kipr/wombat.h>
+#include <kipr/botball.h>
+
+
+
+//Movement 
+void Forward(int dist);
+void Turn(int deg);
+
+//Arm and claw
+void OpenClaw(int port);
+void CloseClaw(int port);
+void BackArm(int port, int deg);
+void ForeArm(int port, int deg);
+
+
+
+int main()
+{
+    //port vars
+    int claw = 1;
+    int foreArm = 0;
+    int backArm = 0;
+    //
+    int foreArmDown = 450;
+    int foreArmUp = 2037;
+    enable_servos();
+    create_connect(); //check both plugs and creates status
+    
+    
+
+
+    //beginning the game
+    //getting botguy
+    CloseClaw(claw); 
+ 
+    
+   	Forward(7300); //drive to botguy
+    msleep(1);
+    
+   
+    
+   	ForeArm(foreArm, 1024); //reach for botguy
+    msleep(5);
+    
+    OpenClaw(claw);
+    msleep(500);
+    
+	ForeArm(foreArm, 2047); 
+  
+    BackArm(backArm, 1000); //reach for botguy
+    
+    CloseClaw(claw); //grab botguy
+    msleep(50);
+    
+    BackArm(backArm, -1000); 
+    
+    Forward(-3000);
+    msleep(50);
+    
+    OpenClaw(claw);
+    msleep(50);
+    
+    //clearing the walkway
+    
+    ForeArmRest(foreArm);
+    
+    //getting the satalite 
+    
+    Turn(-125);
+    msleep(100);
+    
+    Forward(200);
+    msleep(200);
+    
+    CloseClaw(claw);
+    msleep(200);
+    
+    ForeArmRest(foreArm);
+    msleep(10);
+    
+    
+
+    
+    CloseClaw(claw);
+    ao();
+	create_disconnect();
+    disable_servos();
+    return 0;
+}
+
+
+//Function definitions
+//create functions IE the robot base
+void Forward(int dist)
+{
+    set_create_distance(0);
+    if (dist > 0)
+    {
+	create_drive_direct(100, 100);
+	msleep(dist);
+    }
+    else //Incase the distance is negative
+    {
+    create_drive_direct(-100, -100);
+	msleep(dist * -1); 
+    }
+    create_stop();
+}
+void Turn(int deg)
+{
+ int turnDirection;
+ set_create_total_angle(0); 
+ if (deg < 0)
+ {
+    turnDirection = -1;
+ }
+ else
+ {
+ 	turnDirection = 1;
+ }
+    
+ int currentDeg = turnDirection * -1 * get_create_total_angle();
+ while(currentDeg < (deg * turnDirection))
+ {
+  create_drive_direct(200 * turnDirection, -200 * turnDirection);
+  msleep(1);
+  currentDeg  = turnDirection * -1 * get_create_total_angle();
+ }
+  create_stop();
+}
+
+
+//Arms Claws etc
+void OpenClaw(int port)
+{
+    set_servo_position(port, 50);
+    msleep(1000);
+}
+void CloseClaw(int port)
+{
+    set_servo_position(port, 2076);
+    msleep(1000);
+}
+void BackArm(int port, int deg)
+{	
+   	int direction;
+    if (deg < 0)
+    {
+     direction = -1;
+        
+    }else
+    {
+     direction = 1;
+    }
+    
+    clear_motor_position_counter(port);
+    mav(port, 200 * direction);
+    msleep(deg + 2000);
+    ao();
+    freeze(port);
+}
+
+void ForeArm(int port, int Deg)
+{
+	int targetDeg = get_servo_position(port);
+    
+    while (targetDeg > Deg){
+    targetDeg = get_servo_position(port);
+    set_servo_position(port, Deg - 5);
+    msleep(5);
+    
+    }
+    
+    
+    while (targetDeg < Deg){
+    targetDeg = get_servo_position(port);
+    set_servo_position(port, Deg + 5);
+    msleep(5);
+    }
+}
+
+void ForeArmRest(int port)
+{
+ 
+    int deg = get_servo_position(port);
+    
+    while (deg > 111){
+    deg = get_servo_position(port);
+    set_servo_position(port, deg - 5);
+    msleep(5);
+    }
+      
+}
